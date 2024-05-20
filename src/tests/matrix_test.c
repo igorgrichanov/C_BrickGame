@@ -172,6 +172,7 @@ START_TEST(matrix_rotate_test_11) {
   ck_assert_int_eq(1, is_equal);
   remove_matrix(matrix_to_rotate);
   remove_matrix(correct_copy);
+  remove_matrix(correct);
 }
 END_TEST
 

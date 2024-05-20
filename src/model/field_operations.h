@@ -6,12 +6,10 @@
  * @brief функции, выполняющие операции над игровым полем и падающей фигурой
  */
 
+#include <string.h>
+
 #include "matrix_operations.h"
 #include "structures.h"
-
-/// @brief инициализация матрицы игрового поля
-/// @return пустое игровое поле
-int **init_field();
 
 /// @brief сдвиг фигуры на один ряд ниже
 /// @param info информация об игре
@@ -73,4 +71,46 @@ void move_field_down(GameInfo_t *info);
 /// @param info информация об игре
 /// @return количество заполненных рядов снизу
 int count_filled_rows(GameInfo_t *info);
+
+/// @brief получить поле с границами
+/// @details поле игры из GameInfo_t имеет строгий размер 20х10. Для проверок
+/// смещения в стороны и вниз удобно было бы иметь "стенки" - столбцы и строки
+/// по краям поля, заполненные числами
+/// @param field игровое поле 20х10 без стенок
+/// @return игровое поле со стенками
+int **get_field_with_borders(int **field);
+
+/**
+ * @brief добавление приветственного текста на поле
+ *
+ * @param info информация об игре
+ */
+void add_greeting(GameInfo_t *info);
+
+/**
+ * @brief добавление текста о способах начать и покинуть игру
+ *
+ * @param info информация об игре
+ */
+void add_init_text(GameInfo_t *info);
+
+/**
+ * @brief добавление текста о выигрыше на очищенное поле
+ *
+ */
+void prepare_win_screen();
+
+/**
+ * @brief добавление текста о проигрыше на очищенное поле
+ *
+ */
+void prepare_game_over_screen();
+
+/**
+ * @brief добавление текста, сообщающего о состоянии паузы, на очищенное
+ * игровое поле
+ *
+ */
+void prepare_pause_screen();
+
 #endif

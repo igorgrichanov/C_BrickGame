@@ -7,11 +7,9 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 #include <time.h>
 
 #include "field_operations.h"
-#include "matrix_operations.h"
 
 /// @brief забрать тетрамино из секции NEXT для выбрасывания на поле
 void drop_new_tetramino();
@@ -26,7 +24,7 @@ void get_next_tetramino(GameInfo_t *info);
 int get_tetramino_size(int idx);
 
 /// @brief проверка заполнения нижних рядов
-void check_bottom_filling();
+void handle_bottom_filling();
 
 /// @brief добавление очков
 /// @param filled_rows количество заполненных рядов
@@ -59,16 +57,12 @@ void destroy_game_info();
 /// @brief поворот падающего тетрамино
 void rotate_tetramino();
 
-/// @brief получение времени конца такта MOVING_STATE
-/// @param start структура, содержащая время старта
-/// @param limit структура для записи времени конца такта
-void get_tick_limit(struct timespec *start, struct timespec *limit);
+/// @brief подсчет времени конца такта MOVING_STATE
+void get_tick_limit();
 
-/// @brief проверка, не истекло ли время состояния MOVING_STATE
-/// @param now текущее время
-/// @param limit время конца такта
+/// @brief проверка, не истек ли таймер состояния MOVING_STATE
 /// @return 0 - время истекло, 1 - время есть
-int check_tick_limit(struct timespec *now, struct timespec *limit);
+int check_tick_limit();
 
 /// @brief получение информации о рекорде пользователя в предыдущих сеансах
 /// игры. Запись нулевого значения рекорда для нового пользователя

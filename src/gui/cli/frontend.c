@@ -3,21 +3,20 @@
 void print_current_screen(GameInfo_t game_info) {
   clean_game_info();
   print_game_info(game_info);
-  clean_next_tetramino();
-  print_next_tetramino(game_info);
+  clean_next();
+  if (game_info.next) print_next(game_info);
   update_moving_field(game_info);
 }
 
-void print_moving_tetramino(GameInfo_t game_info) {
-  int x = game_info.moving->x, y = game_info.moving->y;
+void print_moving(GameInfo_t game_info) {
+  int row = game_info.moving->row, col = game_info.moving->col;
   int rows = game_info.moving->rows, columns = game_info.moving->columns;
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < columns; j++) {
-      if (game_info.moving->figure[i][j] && x + i >= TETRAMINO_BUFFER) {
+      if (game_info.moving->figure[i][j] && row + i >= 0) {
         attron(A_BOLD);
         attrset(COLOR_PAIR(game_info.moving->idx));
-        mvaddch(TOP_T + 1 + x + i - TETRAMINO_BUFFER, LEFT_T + y + j,
-                ACS_CKBOARD);
+        mvaddch(TOP_T + 1 + row + i, LEFT_T + 1 + col + j, ACS_CKBOARD);
         attrset(0);
       }
     }
@@ -26,32 +25,43 @@ void print_moving_tetramino(GameInfo_t game_info) {
 }
 
 void print_field(GameInfo_t game_info) {
-  for (int i = TOP_FIELD; i < BOTTOM_FIELD + 1; i++) {
-    for (int j = 1; j < FIELD_COLUMNS + 1; j++) {
-      if (game_info.field[i][j]) {
+  for (int i = 0; i < FIELD_ROWS; i++) {
+    for (int j = 0; j < FIELD_COLUMNS; j++) {
+      if (game_info.field[i][j] >= 1 && game_info.field[i][j] <= 7) {
         attron(A_BOLD);
         attrset(COLOR_PAIR(game_info.field[i][j]));
-        mvaddch(TOP_T + 1 + i - TETRAMINO_BUFFER, LEFT_T + j, ACS_CKBOARD);
+        mvaddch(TOP_T + 1 + i, LEFT_T + 1 + j, ACS_CKBOARD);
         attrset(0);
+      } else if (game_info.field[i][j]) {
+        mvaddch(TOP_T + 1 + i, LEFT_T + 1 + j, game_info.field[i][j]);
       } else {
-        mvprintw(TOP_T + 1 + i - TETRAMINO_BUFFER, LEFT_T + j, " ");
+        mvprintw(TOP_T + 1 + i, LEFT_T + 1 + j, " ");
       }
     }
   }
+  if (game_info.bottom_text)
+    mvprintw(BOTTOM_T + 2, LEFT_T, game_info.bottom_text);
+  else {
+    char spaces[] = "                             ";
+    for (int i = 0; i < 3; ++i) {
+      mvprintw(BOTTOM_T + 2 + i, LEFT_T, spaces);
+    }
+  }
+
   refresh();
 }
 
 void update_moving_field(GameInfo_t game_info) {
   clean_field();
   print_field(game_info);
-  print_moving_tetramino(game_info);
+  if (!game_info.game_over && !game_info.pause) print_moving(game_info);
 }
 
 char *ask_user_name() {
   char *user_name = (char *)calloc(sizeof(char), USER_NAME_SIZE);
-  printf("Your name (2-15 characters): ");
+  printf("Your name (2-12 characters): ");
   while (!scanf("%s", user_name) || strlen(user_name) < 2 ||
-         strlen(user_name) > 15) {
+         strlen(user_name) > 12) {
     printf("Please enter at least 2 characters: ");
   }
   return user_name;
@@ -84,13 +94,6 @@ void clean_field() {
   refresh();
 }
 
-void clean_game() {
-  clean_game_info();
-  clean_next_tetramino();
-  clean_field();
-  clean_welcome_screen();
-}
-
 void draw_rectangle(int top, int bottom, int left, int right) {
   /// ставим 4 угла, чтобы рамка была целостной
   mvaddch(top, left, ACS_ULCORNER);
@@ -109,24 +112,6 @@ void draw_rectangle(int top, int bottom, int left, int right) {
   for (int i = bottom - 1; i > top; i--) {
     mvaddch(i, left, ACS_VLINE);
   }
-}
-
-void draw_welcome_screen(GameInfo_t game_info) {
-  print_overlay();
-  mvprintw(Y_WELCOME_TEXT, X_WELCOME_TEXT, "Hi, %s!", game_info.user_name);
-  mvprintw(Y_WELCOME_TEXT + 2, X_WELCOME_TEXT, "Press ENTER to start");
-  mvprintw(Y_WELCOME_TEXT + 3, X_WELCOME_TEXT, "Press \"q\" to quit the game");
-
-  refresh();
-}
-
-void clean_welcome_screen() {
-  move(Y_WELCOME_TEXT, X_WELCOME_TEXT);
-  deleteln();
-  deleteln();
-  deleteln();
-  deleteln();
-  refresh();
 }
 
 void print_game_info(GameInfo_t game_info) {
@@ -156,7 +141,7 @@ void clean_game_info() {
   refresh();
 }
 
-void print_next_tetramino(GameInfo_t game_info) {
+void print_next(GameInfo_t game_info) {
   /// все фигуры в базовом положении занимают не более 2 рядов
   int j_shift = 2, rows = 2, columns = 3;
   if (game_info.next_idx == 4) {
@@ -178,7 +163,7 @@ void print_next_tetramino(GameInfo_t game_info) {
   refresh();
 }
 
-void clean_next_tetramino() {
+void clean_next() {
   for (int i = LEFT_NEXT + 1; i < RIGHT_NEXT; i++) {
     for (int j = TOP_NEXT + 1; j < BOTTOM_NEXT; j++) {
       mvprintw(j, i, " ");
@@ -197,32 +182,4 @@ void print_options() {
   mvprintw(Y_OPTIONS, X_OPTIONS, "OPTIONS");
   attrset(0);
   refresh();
-}
-
-void print_pause_screen() {
-  clean_game_info();
-  mvprintw(TOP_SCORE + 1, LEFT_SCORE + 1, "PAUSE");
-  move(BOTTOM_OPTIONS + 1, LEFT_OPTIONS);
-  refresh();
-}
-
-void print_game_over_screen() {
-  clean_field();
-  mvprintw(TOP_T + 15, LEFT_T + 1, "GAME OVER");
-  mvprintw(Y_WELCOME_TEXT + 2, X_WELCOME_TEXT, "Press ENTER to start new game");
-  mvprintw(Y_WELCOME_TEXT + 3, X_WELCOME_TEXT, "Press \"q\" to quit");
-  refresh();
-}
-
-void print_win_screen() {
-  clean_field();
-  mvprintw(TOP_T + 15, LEFT_T + 2, "YOU WON!");
-  mvprintw(Y_WELCOME_TEXT + 2, X_WELCOME_TEXT, "Press ENTER to start new game");
-  mvprintw(Y_WELCOME_TEXT + 3, X_WELCOME_TEXT, "Press \"q\" to quit");
-  refresh();
-}
-
-void clean_pause_screen(GameInfo_t game_info) {
-  clean_game_info();
-  print_game_info(game_info);
 }

@@ -56,42 +56,6 @@ START_TEST(update_record_test) {
   update_user_record(info->user_name, new_record);
   int record_from_file = load_user_record(info->user_name);
   ck_assert_int_eq(new_record, record_from_file);
-}
-END_TEST
-
-START_TEST(game_info_test_init) {
-  GameInfo_t *info = init_game_info_tetris((char *)"igor");
-  info = current_game_info(info);
-  int correct_field[FIELD_ROWS + TETRAMINO_BUFFER + 1][FIELD_COLUMNS + 2] = {
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-      {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}};
-  for (int i = 0; i < FIELD_ROWS + TETRAMINO_BUFFER + 1; i++) {
-    for (int j = 0; j < FIELD_COLUMNS + 2; j++) {
-      ck_assert_int_eq(correct_field[i][j], info->field[i][j]);
-    }
-  }
   destroy_game_info();
 }
 END_TEST
@@ -103,18 +67,21 @@ START_TEST(rotate_test_1) {
   get_next_test(info, 2);
   drop_new_tetramino();
   get_next_test(info, 2);
-  info->field[2][5] = 1;
+  shift_down(info);
+  shift_down(info);
+  shift_down(info);
+  info->field[2][4] = 1;
   rotate_tetramino();
 
   attach(info);
-  ck_assert_int_eq(info->moving->y, 5);
-  ck_assert_int_eq(info->moving->x, 0);
+  ck_assert_int_eq(info->moving->row, 0);
+  ck_assert_int_eq(info->moving->col, 4);
+  ck_assert_int_eq(info->field[0][5], info->moving->figure[1][1]);
   ck_assert_int_eq(info->field[0][6], info->moving->figure[1][1]);
-  ck_assert_int_eq(info->field[0][7], info->moving->figure[1][1]);
-  ck_assert_int_eq(info->field[1][6], info->moving->figure[1][1]);
-  ck_assert_int_eq(info->field[2][6], info->moving->figure[1][1]);
-  ck_assert_int_ne(info->field[0][5], info->moving->figure[1][1]);
-  ck_assert_int_ne(info->field[1][5], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[1][5], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[2][5], info->moving->figure[1][1]);
+  ck_assert_int_ne(info->field[0][4], info->moving->figure[1][1]);
+  ck_assert_int_ne(info->field[1][4], info->moving->figure[1][1]);
 
   destroy_game_info();
 }
@@ -127,18 +94,21 @@ START_TEST(rotate_test_2) {
   get_next_test(info, 2);
   drop_new_tetramino();
   get_next_test(info, 2);
-  info->field[2][6] = 1;
+  shift_down(info);
+  shift_down(info);
+  shift_down(info);
+  info->field[2][5] = 1;
   rotate_tetramino();
 
   attach(info);
-  ck_assert_int_eq(info->moving->y, 5);
-  ck_assert_int_eq(info->moving->x, 0);
-  ck_assert_int_eq(info->field[0][5], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->moving->row, 0);
+  ck_assert_int_eq(info->moving->col, MOVING_INIT_COL);
+  ck_assert_int_eq(info->field[0][4], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[1][4], info->moving->figure[1][1]);
   ck_assert_int_eq(info->field[1][5], info->moving->figure[1][1]);
   ck_assert_int_eq(info->field[1][6], info->moving->figure[1][1]);
-  ck_assert_int_eq(info->field[1][7], info->moving->figure[1][1]);
+  ck_assert_int_ne(info->field[0][5], info->moving->figure[1][1]);
   ck_assert_int_ne(info->field[0][6], info->moving->figure[1][1]);
-  ck_assert_int_ne(info->field[0][7], info->moving->figure[1][1]);
 
   destroy_game_info();
 }
@@ -151,20 +121,141 @@ START_TEST(rotate_test_3) {
   get_next_test(info, 2);
   drop_new_tetramino();
   get_next_test(info, 2);
-  info->field[2][5] = 1;
+  shift_down(info);
+  shift_down(info);
+  shift_down(info);
+  info->field[2][4] = 1;
   rotate_tetramino();
   rotate_tetramino();
   rotate_tetramino();
 
   attach(info);
-  ck_assert_int_eq(info->moving->y, 5);
-  ck_assert_int_eq(info->moving->x, 0);
+  ck_assert_int_eq(info->moving->row, 0);
+  ck_assert_int_eq(info->moving->col, MOVING_INIT_COL);
+  ck_assert_int_eq(info->field[1][4], info->moving->figure[1][1]);
   ck_assert_int_eq(info->field[1][5], info->moving->figure[1][1]);
   ck_assert_int_eq(info->field[1][6], info->moving->figure[1][1]);
-  ck_assert_int_eq(info->field[1][7], info->moving->figure[1][1]);
-  ck_assert_int_eq(info->field[2][7], info->moving->figure[1][1]);
-  ck_assert_int_ne(info->field[2][6], info->moving->figure[1][1]);
-  ck_assert_int_ne(info->field[0][6], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[2][6], info->moving->figure[1][1]);
+  ck_assert_int_ne(info->field[2][5], info->moving->figure[1][1]);
+  ck_assert_int_ne(info->field[0][5], info->moving->figure[1][1]);
+
+  destroy_game_info();
+}
+END_TEST
+
+START_TEST(rotate_test_at_the_bottom) {
+  GameInfo_t *info = init_game_info_tetris((char *)"igor");
+  info = current_game_info(info);
+  drop_new_tetramino();
+  get_next_test(info, 2);
+  drop_new_tetramino();
+  get_next_test(info, 2);
+  drop_down(info);
+  rotate_tetramino();
+
+  attach(info);
+  ck_assert_int_eq(info->moving->row, 18);
+  ck_assert_int_eq(info->moving->col, MOVING_INIT_COL);
+  ck_assert_int_eq(info->field[18][4], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[19][4], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[19][5], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[19][6], info->moving->figure[1][1]);
+  ck_assert_int_ne(info->field[18][6], info->moving->figure[1][1]);
+  ck_assert_int_ne(info->field[17][6], info->moving->figure[1][1]);
+
+  destroy_game_info();
+}
+END_TEST
+
+START_TEST(rotate_test_in_buffer) {
+  GameInfo_t *info = init_game_info_tetris((char *)"igor");
+  info = current_game_info(info);
+  drop_new_tetramino();
+  get_next_test(info, 2);
+  drop_new_tetramino();
+  get_next_test(info, 2);
+  rotate_tetramino();
+  shift_down(info);
+  shift_down(info);
+  shift_down(info);
+
+  attach(info);
+  ck_assert_int_eq(info->moving->row, 0);
+  ck_assert_int_eq(info->moving->col, MOVING_INIT_COL);
+  ck_assert_int_eq(info->field[0][5], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[0][6], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[1][5], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[2][5], info->moving->figure[1][1]);
+  ck_assert_int_ne(info->field[0][4], info->moving->figure[1][1]);
+  ck_assert_int_ne(info->field[1][4], info->moving->figure[1][1]);
+
+  destroy_game_info();
+}
+END_TEST
+
+START_TEST(rotate_test_left_border) {
+  GameInfo_t *info = init_game_info_tetris((char *)"igor");
+  info = current_game_info(info);
+  drop_new_tetramino();
+  get_next_test(info, 1);
+  drop_new_tetramino();
+  get_next_test(info, 1);
+  shift_down(info);
+  shift_down(info);
+  shift_down(info);
+  rotate_tetramino();
+
+  shift_left(info);
+  shift_left(info);
+  shift_left(info);
+  shift_left(info);
+  shift_left(info);
+  shift_left(info);
+  shift_left(info);
+
+  attach(info);
+  ck_assert_int_eq(info->moving->row, 0);
+  ck_assert_int_eq(info->moving->col, -2);
+  ck_assert_int_eq(info->field[0][0], info->moving->figure[1][2]);
+  ck_assert_int_eq(info->field[1][0], info->moving->figure[1][2]);
+  ck_assert_int_eq(info->field[2][0], info->moving->figure[1][2]);
+  ck_assert_int_eq(info->field[3][0], info->moving->figure[1][2]);
+  ck_assert_int_ne(info->field[1][1], info->moving->figure[1][2]);
+  ck_assert_int_ne(info->field[2][1], info->moving->figure[1][2]);
+
+  destroy_game_info();
+}
+END_TEST
+
+START_TEST(rotate_test_right_border) {
+  GameInfo_t *info = init_game_info_tetris((char *)"igor");
+  info = current_game_info(info);
+  drop_new_tetramino();
+  get_next_test(info, 1);
+  drop_new_tetramino();
+  get_next_test(info, 1);
+  shift_down(info);
+  shift_down(info);
+  shift_down(info);
+  rotate_tetramino();
+  rotate_tetramino();
+  rotate_tetramino();
+
+  shift_right(info);
+  shift_right(info);
+  shift_right(info);
+  shift_right(info);
+  shift_right(info);
+
+  attach(info);
+  ck_assert_int_eq(info->moving->row, 0);
+  ck_assert_int_eq(info->moving->col, 8);
+  ck_assert_int_eq(info->field[0][9], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[1][9], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[2][9], info->moving->figure[1][1]);
+  ck_assert_int_eq(info->field[3][9], info->moving->figure[1][1]);
+  ck_assert_int_ne(info->field[2][8], info->moving->figure[1][1]);
+  ck_assert_int_ne(info->field[1][8], info->moving->figure[1][1]);
 
   destroy_game_info();
 }
@@ -174,15 +265,15 @@ START_TEST(add_points_test_1) {
   GameInfo_t *info = init_game_info_tetris((char *)"igor");
   info = current_game_info(info);
 
-  for (int i = 17; i < 23; i++) {
-    for (int j = 1; j < 11; j++) {
+  for (int i = FIELD_ROWS - 6; i < FIELD_ROWS; i++) {
+    for (int j = 0; j < FIELD_ROWS; j++) {
       info->field[i][j] = 1;
     }
   }
-  info->field[16][1] = 1;
-  info->field[16][2] = 1;
-  info->field[16][10] = 1;
-  info->field[15][3] = 1;
+  info->field[FIELD_ROWS - 7][1] = 1;
+  info->field[FIELD_ROWS - 7][2] = 1;
+  info->field[FIELD_ROWS - 7][10] = 1;
+  info->field[FIELD_ROWS - 8][3] = 1;
 
   add_points(count_filled_rows(info));
   ck_assert_int_eq(info->score, 1800);
@@ -191,10 +282,10 @@ START_TEST(add_points_test_1) {
     move_field_down(info);
   }
   ck_assert_int_eq(count_filled_rows(info), 0);
-  ck_assert_int_eq(info->field[22][1], 1);
-  ck_assert_int_eq(info->field[22][2], 1);
-  ck_assert_int_eq(info->field[22][10], 1);
-  ck_assert_int_eq(info->field[21][3], 1);
+  ck_assert_int_eq(info->field[FIELD_ROWS - 1][1], 1);
+  ck_assert_int_eq(info->field[FIELD_ROWS - 1][2], 1);
+  ck_assert_int_eq(info->field[FIELD_ROWS - 1][10], 1);
+  ck_assert_int_eq(info->field[FIELD_ROWS - 2][3], 1);
 
   change_level();
   update_user_record((char *)"igor", info->score);
@@ -218,29 +309,32 @@ START_TEST(delay_test_1) {
   GameInfo_t *info = init_game_info_tetris((char *)"igor");
   info = current_game_info(info);
 
-  struct timespec *start = (struct timespec *)malloc(sizeof(struct timespec));
-  struct timespec *now = (struct timespec *)malloc(sizeof(struct timespec));
-  struct timespec *limit = (struct timespec *)malloc(sizeof(struct timespec));
-  clock_gettime(CLOCK_REALTIME, start);
-  clock_gettime(CLOCK_REALTIME, now);
-  get_tick_limit(start, limit);
-  while (check_tick_limit(now, limit)) {
-    clock_gettime(CLOCK_REALTIME, now);
-  }
-  free(start);
-  free(now);
-  free(limit);
+  get_tick_limit();
+  usleep(750000);
+  ck_assert_int_eq(check_tick_limit(), 1);
 
   destroy_game_info();
 }
 END_TEST
 
-START_TEST(check_bottom_filling_test_1) {
+START_TEST(delay_test_2) {
+  GameInfo_t *info = init_game_info_tetris((char *)"igor");
+  info = current_game_info(info);
+
+  get_tick_limit();
+  usleep(850000);
+  ck_assert_int_eq(check_tick_limit(), 0);
+
+  destroy_game_info();
+}
+END_TEST
+
+START_TEST(handle_bottom_filling_test_1) {
   GameInfo_t *info = init_game_info_tetris((char *)"igor");
   info = current_game_info(info);
   fill_bottom_test(info);
 
-  check_bottom_filling();
+  handle_bottom_filling();
   ck_assert_int_eq(info->level, 1);
   ck_assert_int_eq(info->score, 100);
 
@@ -248,7 +342,7 @@ START_TEST(check_bottom_filling_test_1) {
 }
 END_TEST
 
-START_TEST(check_bottom_filling_test_2) {
+START_TEST(handle_bottom_filling_test_2) {
   GameInfo_t *info = init_game_info_tetris((char *)"igor");
   info = current_game_info(info);
   fill_bottom_test(info);
@@ -259,7 +353,7 @@ START_TEST(check_bottom_filling_test_2) {
   fill_bottom_test(info);
   fill_bottom_test(info);
 
-  check_bottom_filling();
+  handle_bottom_filling();
   ck_assert_int_eq(info->level, 4);
   ck_assert_int_eq(info->score, 2200);
 
@@ -276,8 +370,9 @@ START_TEST(clear_game_info_test) {
 
   ck_assert_int_eq(updateCurrentState().level, 1);
   ck_assert_int_eq(updateCurrentState().score, 0);
-  ck_assert_int_eq(updateCurrentState().field[22][9], 0);
+  ck_assert_int_eq(updateCurrentState().field[FIELD_ROWS - 1][9], 0);
   ck_assert_int_eq(updateCurrentState().moving->idx, 1);
+  ck_assert_ptr_eq(updateCurrentState().bottom_text, NULL);
 
   destroy_game_info();
 }
@@ -293,15 +388,19 @@ Suite *tetris_backend_test_suite() {
   tcase_add_test(tc, load_existing_record_test);
   tcase_add_test(tc, load_non_existing_record_test);
   tcase_add_test(tc, update_record_test);
-  tcase_add_test(tc, game_info_test_init);
   tcase_add_test(tc, rotate_test_1);
   tcase_add_test(tc, rotate_test_2);
   tcase_add_test(tc, rotate_test_3);
+  tcase_add_test(tc, rotate_test_left_border);
+  tcase_add_test(tc, rotate_test_right_border);
+  tcase_add_test(tc, rotate_test_in_buffer);
+  tcase_add_test(tc, rotate_test_at_the_bottom);
   tcase_add_test(tc, add_points_test_1);
   tcase_add_test(tc, fsm_test_1);
   tcase_add_test(tc, delay_test_1);
-  tcase_add_test(tc, check_bottom_filling_test_1);
-  tcase_add_test(tc, check_bottom_filling_test_2);
+  tcase_add_test(tc, delay_test_2);
+  tcase_add_test(tc, handle_bottom_filling_test_1);
+  tcase_add_test(tc, handle_bottom_filling_test_2);
   tcase_add_test(tc, clear_game_info_test);
 
   suite_add_tcase(s, tc);

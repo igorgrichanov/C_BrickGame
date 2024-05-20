@@ -2,10 +2,10 @@
 #define TEST_SUITES
 
 #include <check.h>
+#include <unistd.h>
 
 #include "..//model/backend.h"
 #include "..//model/fsm.h"
-#include "../controller/controller.h"
 
 Suite *tetris_backend_test_suite();
 Suite *matrix_test_suite();

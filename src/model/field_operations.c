@@ -1,103 +1,84 @@
 #include "field_operations.h"
 
-int **init_field() {
-  /// тетрамино не появляется на поле сразу целиком, поэтому зарезервируем
-  /// дополнительный буфер. Еще по две строки выделим для нижней и правой
-  /// стенок, так как тетрамино под номером 1 при проверках может выйти за
-  /// границы поля. Левая граница имеет длину 1, так как
-  /// ошибка выхода за пределы поля при проверке смещений была выявлена на
-  /// поздних стадиях проекта – увеличение толщины левой стенки потребует
-  /// изменения значетельной части тестов и логики игры
-  int rows = FIELD_ROWS + TETRAMINO_BUFFER + WALL_SIZE;
-  /// выделим два столбца под границы поля
-  int columns = 1 + FIELD_COLUMNS + WALL_SIZE;
-  int **field = create_matrix(rows, columns);
-  /// установка левой и правой грацицы поля
-  for (int i = 0; i < rows; i++) {
-    field[i][0] = 1;
-    field[i][columns - 2] = 1;
-    field[i][columns - 1] = 1;
-  }
-  /// установка нижней границы поля
-  for (int j = 1; j < columns - 1; j++) {
-    field[rows - 2][j] = 1;
-    field[rows - 1][j] = 1;
-  }
-  return field;
-}
-
 int shift_down(GameInfo_t *info) {
   int result = check_down(info);
-  if (result) info->moving->x++;
+  if (check_down(info)) info->moving->row++;
   return result;
 }
 
 int check_down(GameInfo_t *info) {
   int flag = 1;
-  int x = info->moving->x, y = info->moving->y;
+  int row = info->moving->row + TETRAMINO_BUFFER,
+      col = info->moving->col + WALL_SIZE;
   int rows = info->moving->rows, columns = info->moving->columns;
-  // if (info->moving->idx == 1 && info->moving->figure[1][0]) rows = 2;
+  int **field_with_borders = get_field_with_borders(info->field);
   for (int i = 0; i < rows && flag; i++) {
     for (int j = 0; j < columns && flag; j++) {
-      if (info->field[x + i + 1][y + j] && info->moving->figure[i][j]) {
+      if (field_with_borders[row + i + 1][col + j] &&
+          info->moving->figure[i][j]) {
         flag = 0;
       }
     }
   }
+  remove_matrix(field_with_borders);
   return flag;
 }
 
 void shift_left(GameInfo_t *info) {
-  if (check_left(info)) info->moving->y--;
+  if (check_left(info)) info->moving->col--;
 }
 
 int check_left(GameInfo_t *info) {
   int flag = 1;
-  int x = info->moving->x, y = info->moving->y;
+  int row = info->moving->row, col = info->moving->col + WALL_SIZE;
   int rows = info->moving->rows, columns = info->moving->columns;
-  int j_start = 0;
-
-  /// костыль для проверок третьего положения первого тетрамино
-  if (info->moving->idx == 1 && info->moving->figure[0][2]) {
-    j_start = 1;
-  }
+  int **field_with_borders = get_field_with_borders(info->field);
   for (int i = 0; i < rows && flag; i++) {
-    for (int j = j_start; j < columns && flag; j++) {
-      if (info->field[x + i][y + j - 1] && info->moving->figure[i][j]) {
+    for (int j = 0; j < columns && flag; j++) {
+      if (field_with_borders[TETRAMINO_BUFFER + row + i][col + j - 1] &&
+          info->moving->figure[i][j]) {
         flag = 0;
       }
     }
   }
+  remove_matrix(field_with_borders);
   return flag;
 }
 
 void shift_right(GameInfo_t *info) {
-  if (check_right(info)) info->moving->y++;
+  if (check_right(info)) info->moving->col++;
 }
 
 int check_right(GameInfo_t *info) {
   int flag = 1;
-  int x = info->moving->x, y = info->moving->y;
+  int row = info->moving->row, col = info->moving->col + WALL_SIZE;
   int rows = info->moving->rows, columns = info->moving->columns;
+  int **field_with_borders = get_field_with_borders(info->field);
   for (int i = 0; i < rows && flag; i++) {
     for (int j = 0; j < columns && flag; j++) {
-      if (info->field[x + i][y + j + 1] && info->moving->figure[i][j]) {
+      if (field_with_borders[TETRAMINO_BUFFER + row + i][col + j + 1] &&
+          info->moving->figure[i][j]) {
         flag = 0;
       }
     }
   }
+  remove_matrix(field_with_borders);
   return flag;
 }
 
 int check_collide(GameInfo_t *info) {
   int flag = 0;
-  int x = info->moving->x, y = info->moving->y;
+  int row = info->moving->row, col = info->moving->col + WALL_SIZE;
   int rows = info->moving->rows, columns = info->moving->columns;
+  int **field_with_borders = get_field_with_borders(info->field);
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < columns; j++) {
-      if (info->field[x + i][y + j] && info->moving->figure[i][j]) flag = 1;
+      if (field_with_borders[TETRAMINO_BUFFER + row + i][col + j] &&
+          info->moving->figure[i][j])
+        flag = 1;
     }
   }
+  remove_matrix(field_with_borders);
   return flag;
 }
 
@@ -108,36 +89,49 @@ void drop_down(GameInfo_t *info) {
 }
 
 void attach(GameInfo_t *info) {
-  int x = info->moving->x, y = info->moving->y;
+  int row = info->moving->row, col = info->moving->col + WALL_SIZE;
   int rows = info->moving->rows, columns = info->moving->columns;
-  if (rows == 4 && info->moving->figure[1][0]) rows = 2;
+
+  /// прикрепим падающую фигуру с полю с границами, чтобы не обрабатывать выход
+  /// незаполненных частей матрицы с падающей фигурой за пределы поля
+  int **field_with_borders = get_field_with_borders(info->field);
   for (int i = 0; i < rows; i++) {
     for (int j = 0; j < columns; j++) {
       if (info->moving->figure[i][j])
-        info->field[x + i][y + j] = info->moving->figure[i][j];
+        field_with_borders[TETRAMINO_BUFFER + row + i][col + j] =
+            info->moving->figure[i][j];
     }
   }
+
+  /// актуализируем игровое поле
+  for (int i = 0; i < FIELD_ROWS; i++) {
+    for (int j = 0; j < FIELD_COLUMNS; j++) {
+      info->field[i][j] =
+          field_with_borders[TETRAMINO_BUFFER + i][WALL_SIZE + j];
+    }
+  }
+  remove_matrix(field_with_borders);
 }
 
 int check_ceiling(GameInfo_t *info) {
   int result = 0;
-  for (int j = 1; j < FIELD_COLUMNS + 1 && !result; j++) {
-    if (info->field[TOP_FIELD][j]) result = 1;
+  for (int j = 0; j < FIELD_COLUMNS && !result; j++) {
+    if (info->field[0][j]) result = 1;
   }
   return result;
 }
 
 int check_row_filling_by_idx(GameInfo_t *info, int idx) {
   int result = 1;
-  for (int j = 1; j < FIELD_COLUMNS + 1 && result; j++) {
+  for (int j = 0; j < FIELD_COLUMNS && result; j++) {
     if (!info->field[idx][j]) result = 0;
   }
   return result;
 }
 
 void move_field_down(GameInfo_t *info) {
-  for (int i = BOTTOM_FIELD; i > TOP_FIELD; i--) {
-    for (int j = 1; j < FIELD_COLUMNS + 1; j++) {
+  for (int i = FIELD_ROWS - 1; i > 0; i--) {
+    for (int j = 0; j < FIELD_COLUMNS; j++) {
       info->field[i][j] = info->field[i - 1][j];
     }
   }
@@ -145,11 +139,79 @@ void move_field_down(GameInfo_t *info) {
 
 int count_filled_rows(GameInfo_t *info) {
   int flag = 0, filled_rows = 0;
-  for (int i = BOTTOM_FIELD; i > TOP_FIELD && !flag; i--) {
+  for (int i = FIELD_ROWS - 1; i >= 0 && !flag; i--) {
     if (check_row_filling_by_idx(info, i))
       filled_rows++;
     else
       flag = 1;
   }
   return filled_rows;
+}
+
+int **get_field_with_borders(int **field) {
+  /// стенки имеют толщину 2, так как I-тетрамино может иметь 2 пустых
+  /// столбца/строки в зависимости от положения
+
+  /// зарезервируем буфер для невидимой части поля, в которую попадает тетрамино
+  /// в SPAWN_STATE
+  int rows = TETRAMINO_BUFFER + FIELD_ROWS + WALL_SIZE;
+  int columns = WALL_SIZE + FIELD_COLUMNS + WALL_SIZE;
+  int **field_with_borders = create_matrix(rows, columns);
+
+  /// установка левой и правой грацицы поля
+  for (int i = 0; i < rows; i++) {
+    field_with_borders[i][0] = 1;
+    field_with_borders[i][1] = 1;
+    field_with_borders[i][columns - 2] = 1;
+    field_with_borders[i][columns - 1] = 1;
+  }
+
+  /// установка нижней границы поля
+  for (int j = WALL_SIZE; j < columns - WALL_SIZE; j++) {
+    field_with_borders[rows - 2][j] = 1;
+    field_with_borders[rows - 1][j] = 1;
+  }
+
+  for (int i = TETRAMINO_BUFFER; i < FIELD_ROWS + TETRAMINO_BUFFER; i++) {
+    for (int j = 0; j < FIELD_COLUMNS; j++) {
+      field_with_borders[i][j + WALL_SIZE] = field[i - TETRAMINO_BUFFER][j];
+    }
+  }
+  return field_with_borders;
+}
+
+void add_greeting(GameInfo_t *info) {
+  if (!info->bottom_text) info->bottom_text = (char *)calloc(sizeof(char), 256);
+  strcat(info->bottom_text, "Hi, ");
+  strcat(info->bottom_text, info->user_name);
+  strcat(info->bottom_text, "!\n   ");
+  add_init_text(info);
+}
+
+void add_init_text(GameInfo_t *info) {
+  if (!info->bottom_text) info->bottom_text = (char *)calloc(sizeof(char), 256);
+  strcat(info->bottom_text, "Press ENTER to start\n   Press \"q\" to quit");
+}
+
+void prepare_game_over_screen() {
+  GameInfo_t *info = current_game_info(NULL);
+  clear_matrix(info->field, FIELD_ROWS, FIELD_COLUMNS);
+  char game_over_text[] = "GAME OVER";
+  for (int i = 0; i < 9; ++i) {
+    info->field[Y_WIN][i] = game_over_text[i];
+  }
+  add_init_text(info);
+}
+
+void prepare_pause_screen() {
+  GameInfo_t *info = current_game_info(NULL);
+  copy_matrix(info->field_copy, info->field, FIELD_ROWS, FIELD_COLUMNS);
+  clear_matrix(info->field, FIELD_ROWS, FIELD_COLUMNS);
+  char pause_text[] = "PAUSE";
+  for (int i = 0; i < 5; ++i) {
+    info->field[Y_WIN][3 + i] = pause_text[i];
+  }
+  if (info->bottom_text) free(info->bottom_text);
+  info->bottom_text = (char *)calloc(sizeof(char), 256);
+  strcat(info->bottom_text, "Tap \'p\' to continue");
 }

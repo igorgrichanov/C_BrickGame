@@ -56,6 +56,10 @@
 
 #include <stdlib.h>
 
+#include "backend.h"
+#include "defines.h"
+#include "structures.h"
+
 typedef enum {
   START_STATE,
   SPAWN_STATE,
@@ -79,5 +83,16 @@ StateMachine_tetris *current_state_machine(StateMachine_tetris *machine);
 
 /// @brief чистка памяти, выделенной под КА
 void destroy_state_machine();
+
+/// @brief обработка действия пользователя
+/// @param action пользовательское действие
+void userInput(UserAction_t action);
+
+/// @brief КА игры "Тетрис"
+void sigact();
+
+/// @brief выполнение действий по смещению падающей фигуры вниз на один ряд по
+/// истечении таймера MOVING_STATE
+void moving_timer_has_expired();
 
 #endif

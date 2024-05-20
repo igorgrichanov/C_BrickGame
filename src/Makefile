@@ -1,13 +1,13 @@
 CC=gcc -std=c11
 CFLAGS=-Wall -Wextra -Werror
-FLAG_COV=--coverage
+FLAG_COV=--coverage -fprofile-arcs -ftest-coverage
 FUNC_TESTS_C=tests/*_test.c
 VALGRIND_FLAGS=--tool=memcheck --track-origins=yes
 NCURSES=-lncurses
 DOCS_FOLDER=doxygen
 CLI=gui/cli/*.c
 
-SOURCES=model/*.c controller/controller.c
+SOURCES=model/*.c
 
 OS=$(shell uname -s)
 
@@ -21,9 +21,9 @@ endif
 
 all: clean install
 
-install:
+install: clean
 	mkdir build
-	touch build/user_record.txt
+	touch build/tetris_record.txt
 	$(CC) $(CFLAGS) main.c $(CLI) $(SOURCES) -o build/tetris $(NCURSES)
 
 uninstall:
@@ -35,12 +35,12 @@ dvi:
 
 dist: clean
 	mkdir -p dist
-	tar -czvf tetris.tar Makefile Doxyfile ./model/* ./gui/cli/* ./controller/* ../README.md ./tests/* main.c
+	tar -czvf tetris.tar Makefile Doxyfile ./model/* ./gui/cli/* ../README.md ./tests/* main.c
 	mv tetris.tar dist/
 
-test:
+test: clean
 	mkdir build
-	touch build/user_record.txt
+	touch build/tetris_record.txt
 	$(CC) $(CFLAGS) -o test tests/main.c $(FUNC_TESTS_C) $(SOURCES) $(FLAG_COV) $(TEST_LIBS)
 	./test
 
@@ -50,8 +50,8 @@ gcov_report: test
 	open gcov_report/index.html
 
 format:
-	@clang-format -i $(FUNC_TESTS_C) tests/*.h $(SOURCES) model/*.h gui/cli/*.h $(CLI) controller/*.c controller/*.h
-	@clang-format -n $(FUNC_TESTS_C) tests/*.h $(SOURCES) model/*.h gui/cli/*.h $(CLI) controller/*.c controller/*.h
+	@clang-format -i $(FUNC_TESTS_C) tests/*.h $(SOURCES) model/*.h gui/cli/*.h $(CLI) main.c
+	@clang-format -n $(FUNC_TESTS_C) tests/*.h $(SOURCES) model/*.h gui/cli/*.h $(CLI) main.c
 
 valgrind: clean
 	$(CC) $(CFLAGS) -o tetris ../tests/main.c $(FUNC_TESTS_C) -g -O0 $(SOURCES) $(TEST_LIBS)

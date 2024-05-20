@@ -1,6 +1,8 @@
+#include <locale.h>
 #include <ncurses.h>
 
 #include "gui/cli/view.h"
+#include "model/backend.h"
 
 /// @brief инициализация библиотеки ncurses
 void init_ncurses() {
@@ -15,6 +17,8 @@ void init_ncurses() {
   curs_set(FALSE);
   /// обработка символов с дополнительной клавиатуры (KEY_)
   keypad(stdscr, TRUE);
+  /// чтение ввода без задержки. Возвращает ERR, если ввода нет
+  nodelay(stdscr, TRUE);
 }
 
 /// @brief инициализация цветов тетрамино (1-7) и цвета текста OPTIONS

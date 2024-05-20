@@ -14,6 +14,9 @@
 #define TETRAMINO_BUFFER 3
 #define WALL_SIZE 2
 
+#define MOVING_INIT_ROW -3
+#define MOVING_INIT_COL 4
+
 /// индекс верхнего ряда в массиве field
 #define TOP_FIELD TETRAMINO_BUFFER
 
@@ -91,7 +94,13 @@
 #define LEFT_OPTIONS RIGHT_A + 4
 #define RIGHT_OPTIONS LEFT_OPTIONS + 21
 
+/// координаты сообщения о победе и поражении
+#define Y_WIN TOP_T + 7
+
 #define SUCCESS 0
 #define ERROR 1
+
+/// частота обновления экрана и приема ввода от пользователя
+#define UPD_FREQUENCY_MICROSECONDS 50000
 
 #endif
