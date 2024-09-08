@@ -50,8 +50,11 @@ ESC – exit
 ### Points scoring
 
 1 line destroyed – 100 pts
+
 2 lines destroyed – 300 pts
+
 3 lines destroyed – 700 pts
+
 4 lines destroyed – 1500 pts
 
 ### Levels
