@@ -16,6 +16,7 @@ make
 
 - The program consists of two parts: library implementing a tetris game logic, and console interface developed with "ncurses" library
 - Game field size is 10x20 like in BrickGame Console
+![BrickGameConsole](img/brickgame-console.jpg)
 - The tetis game logic is developed using finite state machine (FSM)
 - The program build is configured using a Makefile with a standard set of goals for GNU programs: all, install, uninstall, clean, dvi, dist, test, gcov_report
 - The library has been developed in C language of C11 standard using gcc compiler;
