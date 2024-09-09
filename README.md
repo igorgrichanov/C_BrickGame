@@ -1,6 +1,6 @@
 # C_Tetris
 
-Implementation of Tetris game using C programming language and structured approach
+Implementation of Tetris game using C programming language and structured approach. The game supports only console interface
 
 To run Tetris in console:
 
