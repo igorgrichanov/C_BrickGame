@@ -59,7 +59,9 @@ ESC – exit
 
 ### Levels
 
-Every 600 pts increase the level by 1. The maximum level is 10
+Every 600 pts increase the level by 1. The maximum level is 10.
+
+The higher the level, the higher the speed.
 
 
 ### Record storing
